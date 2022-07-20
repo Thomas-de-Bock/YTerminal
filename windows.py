@@ -3,6 +3,16 @@ import curses
 import time
 import math
 
+#Character setup: Right-Down corner etc.
+RDC = u'\u250C'
+LDC = u'\u2510'
+RUC = u'\u2514'
+LUC = u'\u2518'
+Line = u'\u2500'
+LineUp = u'\u2502'
+
+rows = -1
+cols = -1
 
 def outlineWindow(win, name):
     height, width = win.getmaxyx()
@@ -12,8 +22,8 @@ def outlineWindow(win, name):
             crntchar = " "
             if y == 0:
                 crntchar = Line
-                if x > 0 and x <= len(name):
-                    crntchar = name[x-1]
+                if x > 1 and x <= len(name)+1:
+                    crntchar = name[x-2]
                 elif x == 0:
                     crntchar = RDC
                 elif x == width-2:
@@ -33,25 +43,37 @@ def outlineWindow(win, name):
         win.addstr(rowstr)
     win.refresh()
 
-def updateProg(win, perc):
+def setProgbar(perc):
     progamount = math.floor((perc/100)*cols)
-    win.addstr("█" * (progamount-1) + "-"*(cols-progamount-2))
-    win.refresh()
+    progwin.addstr("█" * (progamount-1) + "-"*(cols-progamount-2))
+    progwin.refresh()
 
-def getTextWindow(win):
+def getTextWindow(win, isSearch=False):
     sizey, sizex = win.getmaxyx()
     posy, posx = win.getbegyx()
-    newTextwin = curses.newwin(sizey-2, sizex-3, posy+1, posx+1)
+    newTextwin = None
+    if isSearch:
+        newTextwin = curses.newwin(1, sizex-3, posy, posx+1)
+    else:
+        newTextwin = curses.newwin(sizey-2, sizex-3, posy+1, posx+1)
     newTextwin.refresh()
     return newTextwin
 
 def setupWindows():
+    #Curses setup
+    stdscr = curses.initscr()
+    stdscr.clear()
+    curses.cbreak()
+    stdscr.keypad(True)
+    global rows, cols
+    #Get screen sizes
+    rows, cols = stdscr.getmaxyx()
+
     #Outline windows---------
     #Searchbar setup
     searchwidth = math.floor(cols/2)
     searchwin = curses.newwin(2, searchwidth, 0, int(cols/4))
     outlineWindow(searchwin, "")
-
     #Main List setup
     if rows < 19:
         mainheight = math.floor(rows/1.3)-2
@@ -66,40 +88,30 @@ def setupWindows():
     outlineWindow(playlistwin, "Playlist")
 
     #Queue setup
-    queuewin = curses.newwin(math.floor((mainheight+2)/2), playlistwidth, 0, int(cols/4) + searchwidth + 1)
+    queuewin = curses.newwin(math.floor((mainheight+2)/2), cols-searchwidth-playlistwidth+1, 0, int(cols/4) + searchwidth)
     outlineWindow(queuewin, "Queue")
 
     #ProgressBar setup
+    global progwin
     progwin = curses.newwin(1, cols-2, rows-1, 1)
-    updateProg(progwin, 20)
-
+    
     #Text windows----------
+    global mainTextwin, playlistTextwin, queueTextwin
     mainTextwin = getTextWindow(mainwin)
     playlistTextwin = getTextWindow(playlistwin)
     queueTextwin = getTextWindow(queuewin)
+    global searchTextwin
+    searchTextwin = getTextWindow(searchwin, True)
 
-#Right-Down corner etc.
-RDC = u'\u250C'
-LDC = u'\u2510'
-RUC = u'\u2514'
-LUC = u'\u2518'
-Line = u'\u2500'
-LineUp = u'\u2502'
-
-
-playFromLink("https://www.youtube.com/watch?v=nkJqVFmrAZ0")
-
-stdscr = curses.initscr()
-stdscr.clear()
-curses.cbreak()
-stdscr.keypad(True)
-
-#Get screen sizes
-rows, cols = stdscr.getmaxyx()
-
-setupWindows()
-
-time.sleep(3)
-
-curses.endwin()
-
+def setMainText(text):
+    mainTextwin.addstr(text)
+    mainTextwin.refresh()
+def setQueueText(text):
+    queueTextwin.addstr(text)
+    queueTextwin.refresh()
+def setPlaylistText(text):
+    playlistTextwin.addstr(text)
+    playlistTextwin.refresh()
+def addSearchChar(char):
+    searchTextwin.addstr(char)
+    searchTextwin.refresh()
