@@ -1,6 +1,7 @@
 from pytube import YouTube
 import os
 from playsound import playsound
+from threading import Thread
 
 def getItag(vid):
     audiostreamstr = str(vid.streams.filter(only_audio=True))
@@ -24,13 +25,15 @@ def playFromLink(link):
     mainpath = os.path.dirname(os.path.realpath(__file__))
     global trackpath
     trackpath = mainpath+"/Temp"
-
     try:
         os.mkdir(trackpath) 
     except:
-        print("path exists")
+        pass
 
     track = getVid(link)
     currenttrack = getAudioPath(track)
 
-    playsound(currenttrack)
+    musicThread = Thread(target = playsound, args=(currenttrack, ))
+    musicThread.start()
+
+    #playsound(currenttrack)
