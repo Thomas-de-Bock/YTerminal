@@ -9,10 +9,10 @@ from threading import Thread
             
 global stdscr
 stdscr = setupWindows()
-searchThread = Thread(target = editSearch)
-inputThread = Thread(target = inputLoop)
 
-searchThread.start()
+inputThread = Thread(target = inputLoop)
+editSearch()
+
 inputThread.start()
 
 while True:
